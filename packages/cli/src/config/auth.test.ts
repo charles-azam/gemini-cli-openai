@@ -19,7 +19,6 @@ describe('validateAuthMethod', () => {
   beforeEach(() => {
     vi.stubEnv('GEMINI_API_KEY', undefined);
     vi.stubEnv('ZAI_API_KEY', undefined);
-    vi.stubEnv('GLM_API_KEY', undefined);
     vi.stubEnv('GOOGLE_CLOUD_PROJECT', undefined);
     vi.stubEnv('GOOGLE_CLOUD_LOCATION', undefined);
     vi.stubEnv('GOOGLE_API_KEY', undefined);
@@ -69,7 +68,7 @@ describe('validateAuthMethod', () => {
       authType: AuthType.USE_GLM,
       envs: {},
       expected:
-        'When using GLM API, you must specify the ZAI_API_KEY environment variable (or GLM_API_KEY).\n' +
+        'When using GLM API, you must specify the ZAI_API_KEY environment variable.\n' +
         'Update your environment and try again (no reload needed if using .env)!',
     },
     {

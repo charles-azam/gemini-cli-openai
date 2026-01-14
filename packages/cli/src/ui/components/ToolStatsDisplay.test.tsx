@@ -85,6 +85,7 @@ describe('<ToolStatsDisplay />', () => {
         byName: {
           'test-tool': {
             count: 1,
+            calls: 1,
             success: 1,
             fail: 0,
             durationMs: 100,
@@ -125,6 +126,7 @@ describe('<ToolStatsDisplay />', () => {
         byName: {
           'tool-a': {
             count: 2,
+            calls: 2,
             success: 1,
             fail: 1,
             durationMs: 200,
@@ -137,6 +139,7 @@ describe('<ToolStatsDisplay />', () => {
           },
           'tool-b': {
             count: 1,
+            calls: 1,
             success: 1,
             fail: 0,
             durationMs: 100,
@@ -178,6 +181,7 @@ describe('<ToolStatsDisplay />', () => {
         byName: {
           'long-named-tool-for-testing-wrapping-and-such': {
             count: 999999999,
+            calls: 999999999,
             success: 888888888,
             fail: 111111111,
             durationMs: 987654321,
@@ -216,6 +220,7 @@ describe('<ToolStatsDisplay />', () => {
         byName: {
           'test-tool': {
             count: 1,
+            calls: 1,
             success: 1,
             fail: 0,
             durationMs: 100,

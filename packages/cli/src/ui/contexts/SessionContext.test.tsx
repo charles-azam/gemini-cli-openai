@@ -116,6 +116,7 @@ describe('SessionStatsContext', () => {
         byName: {
           'test-tool': {
             count: 1,
+            calls: 1,
             success: 1,
             fail: 0,
             durationMs: 456,

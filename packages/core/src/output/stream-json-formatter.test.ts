@@ -408,6 +408,7 @@ describe('StreamJsonFormatter', () => {
           byName: {
             Read: {
               count: 2,
+              calls: 2,
               success: 2,
               fail: 0,
               durationMs: 300,
@@ -420,6 +421,7 @@ describe('StreamJsonFormatter', () => {
             },
             Glob: {
               count: 1,
+              calls: 1,
               success: 0,
               fail: 1,
               durationMs: 200,

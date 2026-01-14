@@ -347,6 +347,19 @@ custom tools:
 See the [MCP Server Integration guide](./docs/tools/mcp-server.md) for setup
 instructions.
 
+## 🧪 GLM Verification Tests (Pytest)
+
+The repo ships a small Vitest suite that exercises the GLM 4.7 integration via
+real API calls. These tests are optional but useful when you need to verify that
+reasoning traces and token accounting work end-to-end.
+
+1. Build the CLI bundle: `npm run build`.
+2. Export your GLM API key (`ZAI_API_KEY`).
+3. Run `npx vitest run integration-tests/glm-live.test.ts`.
+
+The tests are skipped automatically if the bundle is missing or if no API key is
+configured. Because they call the live API, keep an eye on your token usage.
+
 ## 🤝 Contributing
 
 We welcome contributions! Gemini CLI is fully open source (Apache 2.0), and we

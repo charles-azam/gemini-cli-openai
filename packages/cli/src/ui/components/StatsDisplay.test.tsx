@@ -149,6 +149,7 @@ describe('<StatsDisplay />', () => {
         byName: {
           'test-tool': {
             count: 2,
+            calls: 2,
             success: 1,
             fail: 1,
             durationMs: 123,
@@ -190,6 +191,7 @@ describe('<StatsDisplay />', () => {
           byName: {
             'test-tool': {
               count: 2,
+              calls: 2,
               success: 1,
               fail: 1,
               durationMs: 123,

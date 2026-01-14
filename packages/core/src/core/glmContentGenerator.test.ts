@@ -58,13 +58,25 @@ describe('GlmContentGenerator', () => {
       } as unknown as Response);
 
     const generator = new GlmContentGenerator(DEFAULT_OPTIONS);
-    const response = await generator.generateContent({
-      model: 'glm-4.7',
-      contents: [],
-      config: {},
-    });
+    const response = await generator.generateContent(
+      {
+        model: 'glm-4.7',
+        contents: [],
+        config: {},
+      },
+      'prompt-123',
+    );
 
     expect(fetchMock).toHaveBeenCalled();
+    const fetchArgs = fetchMock.mock.calls[0];
+    const requestPayload = JSON.parse(
+      (fetchArgs[1] as RequestInit).body as string,
+    );
+    expect(requestPayload.request_id).toBe('prompt-123');
+    expect(requestPayload.thinking).toEqual({
+      type: 'enabled',
+      clear_thinking: true,
+    });
     expect(response.candidates?.[0]?.content?.parts?.length).toBe(3);
     const [thought, text, fnCall] = response.candidates?.[0]?.content?.parts ?? [];
     expect(thought?.thought).toBe(true);
@@ -102,11 +114,14 @@ describe('GlmContentGenerator', () => {
     } as unknown as Response);
 
     const generator = new GlmContentGenerator(DEFAULT_OPTIONS);
-    const streamIterator = await generator.generateContentStream({
-      model: 'glm-4.7',
-      contents: [],
-      config: {},
-    });
+    const streamIterator = await generator.generateContentStream(
+      {
+        model: 'glm-4.7',
+        contents: [],
+        config: {},
+      },
+      'prompt-321',
+    );
 
     const chunks: Array<Awaited<ReturnType<typeof streamIterator.next>>> = [];
     chunks.push(await streamIterator.next());
@@ -120,5 +135,87 @@ describe('GlmContentGenerator', () => {
       secondValue?.candidates?.[0]?.content?.parts?.[0]?.functionCall?.name,
     ).toBe('plan');
     expect(streamIterator.next).toBeDefined();
+  });
+
+  it('falls back to secondary endpoint when default coding path fails', async () => {
+    const firstResponse = {
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      text: async () => 'missing',
+    } as Response;
+    const secondResponse = {
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            finish_reason: 'stop',
+            index: 0,
+            message: { content: 'hi' },
+          },
+        ],
+      }),
+    } as Response;
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(firstResponse)
+      .mockResolvedValueOnce(secondResponse);
+
+    const generator = new GlmContentGenerator(DEFAULT_OPTIONS);
+    await generator.generateContent(
+      {
+        model: 'glm-4.7',
+        contents: [],
+        config: {},
+      },
+      'prompt-456',
+    );
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://api.z.ai/api/coding/paas/v4/chat/completions',
+      expect.any(Object),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'https://api.z.ai/api/paas/v4/chat/completions',
+      expect.any(Object),
+    );
+  });
+
+  it('disables thinking when user opts out', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              finish_reason: 'stop',
+              index: 0,
+              message: { content: 'hello' },
+            },
+          ],
+        }),
+      } as unknown as Response);
+
+    const generator = new GlmContentGenerator(DEFAULT_OPTIONS);
+    await generator.generateContent(
+      {
+        model: 'glm-4.7',
+        contents: [],
+        config: {
+          thinkingConfig: {
+            includeThoughts: false,
+          },
+        },
+      },
+      'prompt-789',
+    );
+
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.thinking).toEqual({ type: 'disabled', clear_thinking: true });
   });
 });

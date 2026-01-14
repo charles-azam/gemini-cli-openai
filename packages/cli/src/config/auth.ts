@@ -27,9 +27,9 @@ export function validateAuthMethod(authMethod: string): string | null {
   }
 
   if (authMethod === AuthType.USE_GLM) {
-    if (!process.env['ZAI_API_KEY'] && !process.env['GLM_API_KEY']) {
+    if (!process.env['ZAI_API_KEY']) {
       return (
-        'When using GLM API, you must specify the ZAI_API_KEY environment variable (or GLM_API_KEY).\n' +
+        'When using GLM API, you must specify the ZAI_API_KEY environment variable.\n' +
         'Update your environment and try again (no reload needed if using .env)!'
       );
     }

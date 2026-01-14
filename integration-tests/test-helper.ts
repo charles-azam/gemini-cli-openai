@@ -497,9 +497,13 @@ export class TestRig {
 
           // Check if this is a JSON output test - if so, don't include stderr
           // as it would corrupt the JSON
+          const outputFormatIndex = commandArgs.indexOf('--output-format');
+          const selectedFormat =
+            outputFormatIndex !== -1
+              ? commandArgs[outputFormatIndex + 1]
+              : undefined;
           const isJsonOutput =
-            commandArgs.includes('--output-format') &&
-            commandArgs.includes('json');
+            selectedFormat && ['json', 'stream-json'].includes(selectedFormat);
 
           // If we have stderr output and it's not a JSON test, include that also
           const finalResult =

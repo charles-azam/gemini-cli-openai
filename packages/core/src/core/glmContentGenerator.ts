@@ -19,13 +19,16 @@ import type {
   GenerateContentResponse,
   GenerateContentResponseUsageMetadata,
   FunctionDeclaration,
+  ThinkingConfig,
 } from '@google/genai';
 import { FunctionCallingConfigMode, FinishReason } from '@google/genai';
 import { estimateTokenCountSync } from '../utils/tokenCalculation.js';
 import { debugLogger } from '../utils/debugLogger.js';
 
-const DEFAULT_GLM_ENDPOINT =
-  'https://api.z.ai/api/coding/paas/v4/chat/completions';
+const DEFAULT_GLM_ENDPOINTS = [
+  'https://api.z.ai/api/coding/paas/v4/chat/completions',
+  'https://api.z.ai/api/paas/v4/chat/completions',
+];
 
 type PatchedGenerateContentResponse = GenerateContentResponse & {
   functionCalls?: FunctionCall[];
@@ -76,6 +79,13 @@ interface GlmChatCompletionRequest {
     | 'none'
     | 'required'
     | { type: 'function'; function: { name: string } };
+  request_id?: string;
+  thinking?: GlmThinkingConfig;
+}
+
+interface GlmThinkingConfig {
+  type: 'enabled' | 'disabled';
+  clear_thinking?: boolean;
 }
 
 interface GlmUsage {
@@ -162,6 +172,26 @@ function toUsageMetadata(usage?: GlmUsage):
   };
   if (usage.reasoning_tokens !== undefined) {
     usageMetadata.thoughtsTokenCount = usage.reasoning_tokens;
+  }
+  return usageMetadata;
+}
+
+function ensureThoughtUsage(
+  usageMetadata: GenerateContentResponseUsageMetadata | undefined,
+  parts: Part[],
+): GenerateContentResponseUsageMetadata | undefined {
+  const thoughtParts = parts.filter(
+    (part) => Boolean(part.thought) && typeof part.text === 'string' && part.text,
+  );
+  if (thoughtParts.length === 0) {
+    return usageMetadata;
+  }
+  const thoughtTokens = estimateTokenCountSync(thoughtParts);
+  if (!usageMetadata) {
+    return { thoughtsTokenCount: thoughtTokens };
+  }
+  if (usageMetadata.thoughtsTokenCount === undefined) {
+    usageMetadata.thoughtsTokenCount = thoughtTokens;
   }
   return usageMetadata;
 }
@@ -325,8 +355,9 @@ export class GlmContentGenerator {
 
   async generateContent(
     request: GenerateContentParameters,
+    userPromptId: string,
   ): Promise<GenerateContentResponse> {
-    const payload = this.toPayload(request, false);
+    const payload = this.toPayload(request, false, userPromptId);
     const response = await this.postCompletion(payload, request.config?.abortSignal);
     const data = (await response.json()) as GlmChatCompletionResponse;
     if (data.choices?.length) {
@@ -337,8 +368,9 @@ export class GlmContentGenerator {
 
   async generateContentStream(
     request: GenerateContentParameters,
+    userPromptId: string,
   ): Promise<AsyncGenerator<GenerateContentResponse>> {
-    const payload = this.toPayload(request, true);
+    const payload = this.toPayload(request, true, userPromptId);
     const response = await this.postCompletion(payload, request.config?.abortSignal);
     const body = response.body;
     if (!body) {
@@ -365,7 +397,38 @@ export class GlmContentGenerator {
     payload: GlmChatCompletionRequest,
     signal: AbortSignal | undefined,
   ): Promise<Response> {
-    const response = await fetch(this.options.endpoint ?? DEFAULT_GLM_ENDPOINT, {
+    const endpoints = this.options.endpoint
+      ? [this.options.endpoint]
+      : DEFAULT_GLM_ENDPOINTS;
+    let lastError: Error | undefined;
+    for (let i = 0; i < endpoints.length; i++) {
+      const endpoint = endpoints[i];
+      try {
+        const response = await this.fetchCompletion(endpoint, payload, signal);
+        if (response.ok) {
+          return response;
+        }
+        const text = await response.text().catch(() => '');
+        lastError = new Error(
+          `GLM API request failed (${response.status}) at ${endpoint}: ${text || response.statusText}`,
+        );
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+      const shouldStop = this.options.endpoint || i === endpoints.length - 1;
+      if (shouldStop) {
+        break;
+      }
+    }
+    throw lastError ?? new Error('GLM API request failed');
+  }
+
+  private async fetchCompletion(
+    endpoint: string,
+    payload: GlmChatCompletionRequest,
+    signal: AbortSignal | undefined,
+  ): Promise<Response> {
+    return fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -376,18 +439,12 @@ export class GlmContentGenerator {
       body: JSON.stringify(payload),
       signal,
     });
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(
-        `GLM API request failed (${response.status}): ${text || response.statusText}`,
-      );
-    }
-    return response;
   }
 
   private toPayload(
     request: GenerateContentParameters,
     stream: boolean,
+    requestId?: string,
   ): GlmChatCompletionRequest {
     const messages = this.buildMessages(request);
     const payload: GlmChatCompletionRequest = {
@@ -398,6 +455,13 @@ export class GlmContentGenerator {
       max_tokens: request.config?.maxOutputTokens ?? undefined,
       stream,
     };
+    if (requestId) {
+      payload.request_id = requestId;
+    }
+    const thinking = this.buildThinkingConfig(request.config?.thinkingConfig);
+    if (thinking) {
+      payload.thinking = thinking;
+    }
     const toolConfig = request.config?.toolConfig;
     let tools: Tool[] = extractTools(request.config?.tools as ToolListUnion);
     const allowedFunctions = toolConfig?.functionCallingConfig?.allowedFunctionNames;
@@ -432,6 +496,20 @@ export class GlmContentGenerator {
       messages.push(...this.convertContent(content));
     }
     return messages;
+  }
+
+  private buildThinkingConfig(
+    config?: ThinkingConfig,
+  ): GlmThinkingConfig | undefined {
+    const includeThoughts = config?.includeThoughts;
+    const budget = config?.thinkingBudget;
+    const shouldDisable =
+      includeThoughts === false ||
+      (typeof budget === 'number' && budget <= 0);
+    return {
+      type: shouldDisable ? 'disabled' : 'enabled',
+      clear_thinking: true,
+    };
   }
 
   private extractSystemInstruction(
@@ -536,6 +614,10 @@ export class GlmContentGenerator {
     if (messageText) {
       parts.push({ text: messageText });
     }
+    const usageMetadata = ensureThoughtUsage(
+      toUsageMetadata(response.usage),
+      parts,
+    );
     const functionCalls = (choice?.message?.tool_calls ?? []).map((toolCall) => ({
       functionCall: {
         id: toolCall.id,
@@ -555,7 +637,7 @@ export class GlmContentGenerator {
           finishReason: convertFinishReason(choice?.finish_reason),
         },
       ],
-      usageMetadata: toUsageMetadata(response.usage),
+      usageMetadata,
       functionCalls: functionCalls.map((part) => part.functionCall!),
     });
   }
@@ -655,7 +737,10 @@ export class GlmContentGenerator {
                 finishReason: convertFinishReason(choice.finish_reason),
               },
             ],
-            usageMetadata: toUsageMetadata(chunk.usage),
+            usageMetadata: ensureThoughtUsage(
+              toUsageMetadata(chunk.usage),
+              parts,
+            ),
           }),
         );
       }

@@ -42,7 +42,6 @@ describe('useAuth', () => {
     vi.resetAllMocks();
     delete process.env['GEMINI_API_KEY'];
     delete process.env['ZAI_API_KEY'];
-    delete process.env['GLM_API_KEY'];
     delete process.env['GEMINI_DEFAULT_AUTH_TYPE'];
   });
 

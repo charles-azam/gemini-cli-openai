@@ -107,7 +107,7 @@ export function AuthDialog({
       return item.value === defaultAuthType;
     }
 
-    if (process.env['ZAI_API_KEY'] || process.env['GLM_API_KEY']) {
+    if (process.env['ZAI_API_KEY']) {
       return item.value === AuthType.USE_GLM;
     }
     if (process.env['GEMINI_API_KEY']) {
@@ -156,10 +156,7 @@ export function AuthDialog({
           }
         }
         if (authType === AuthType.USE_GLM) {
-          if (
-            process.env['ZAI_API_KEY'] !== undefined ||
-            process.env['GLM_API_KEY'] !== undefined
-          ) {
+          if (process.env['ZAI_API_KEY'] !== undefined) {
             setAuthState(AuthState.Unauthenticated);
             return;
           } else {

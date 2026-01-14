@@ -25,6 +25,7 @@ export type UiEvent =
 
 export interface ToolCallStats {
   count: number;
+  calls: number;
   success: number;
   fail: number;
   durationMs: number;
@@ -200,6 +201,7 @@ export class UiTelemetryService extends EventEmitter {
     if (!tools.byName[event.function_name]) {
       tools.byName[event.function_name] = {
         count: 0,
+        calls: 0,
         success: 0,
         fail: 0,
         durationMs: 0,
@@ -214,6 +216,7 @@ export class UiTelemetryService extends EventEmitter {
 
     const toolStats = tools.byName[event.function_name];
     toolStats.count++;
+    toolStats.calls = toolStats.count;
     toolStats.durationMs += event.duration_ms;
     if (event.success) {
       toolStats.success++;
