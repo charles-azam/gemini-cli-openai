@@ -33,6 +33,16 @@ Key implementation files:
 - Optional thinking behavior: `model.zai.clearThinking` to clear preserved
   reasoning between turns (requires restart).
 
+CLI overrides (no settings file needed):
+
+```bash
+gemini --model glm-4.7 \
+  --zai-endpoint https://api.z.ai/api/coding/paas/v4/chat/completions \
+  --zai-clear-thinking
+```
+
+`--zai-model` is an alias for `--model`.
+
 Example `settings.json`:
 
 ```json

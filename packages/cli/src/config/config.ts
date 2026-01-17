@@ -62,6 +62,9 @@ import { runExitCleanup } from '../utils/cleanup.js';
 export interface CliArgs {
   query: string | undefined;
   model: string | undefined;
+  zaiModel: string | undefined;
+  zaiEndpoint: string | undefined;
+  zaiClearThinking: boolean | undefined;
   sandbox: boolean | string | undefined;
   debug: boolean | undefined;
   prompt: string | undefined;
@@ -113,6 +116,21 @@ export async function parseArguments(
           type: 'string',
           nargs: 1,
           description: `Model`,
+        })
+        .option('zai-model', {
+          type: 'string',
+          nargs: 1,
+          description: 'Z.ai model to use (alias for --model).',
+        })
+        .option('zai-endpoint', {
+          type: 'string',
+          nargs: 1,
+          description: 'Override the Z.ai chat completions endpoint.',
+        })
+        .option('zai-clear-thinking', {
+          type: 'boolean',
+          description:
+            'Clear Z.ai reasoning between turns when thinking is enabled.',
         })
         .option('prompt', {
           alias: 'p',
@@ -633,7 +651,10 @@ export async function loadCliConfig(
     ? PREVIEW_GEMINI_MODEL_AUTO
     : DEFAULT_GEMINI_MODEL_AUTO;
   const specifiedModel =
-    argv.model || process.env['GEMINI_MODEL'] || settings.model?.name;
+    argv.model ||
+    argv.zaiModel ||
+    process.env['GEMINI_MODEL'] ||
+    settings.model?.name;
 
   const resolvedModel =
     specifiedModel === GEMINI_MODEL_ALIAS_AUTO
@@ -727,8 +748,9 @@ export async function loadCliConfig(
     experimentalJitContext: settings.experimental?.jitContext,
     noBrowser: !!process.env['NO_BROWSER'],
     summarizeToolOutput: settings.model?.summarizeToolOutput,
-    glmEndpoint: settings.model?.zai?.endpoint,
-    glmClearThinking: settings.model?.zai?.clearThinking,
+    glmEndpoint: argv.zaiEndpoint ?? settings.model?.zai?.endpoint,
+    glmClearThinking:
+      argv.zaiClearThinking ?? settings.model?.zai?.clearThinking,
     ideMode,
     compressionThreshold: settings.model?.compressionThreshold,
     folderTrust,
