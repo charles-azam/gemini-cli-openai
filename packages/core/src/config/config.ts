@@ -322,6 +322,8 @@ export interface ConfigParameters {
   includeDirectories?: string[];
   bugCommand?: BugCommandSettings;
   model: string;
+  glmEndpoint?: string;
+  glmClearThinking?: boolean;
   maxSessionTurns?: number;
   experimentalZedIntegration?: boolean;
   listSessions?: boolean;
@@ -455,6 +457,8 @@ export class Config {
   private readonly cwd: string;
   private readonly bugCommand: BugCommandSettings | undefined;
   private model: string;
+  private readonly glmEndpoint: string | undefined;
+  private readonly glmClearThinking: boolean;
   private previewFeatures: boolean | undefined;
   private hasAccessToPreviewModel: boolean = false;
   private readonly noBrowser: boolean;
@@ -612,6 +616,8 @@ export class Config {
     this.fileDiscoveryService = params.fileDiscoveryService ?? null;
     this.bugCommand = params.bugCommand;
     this.model = params.model;
+    this.glmEndpoint = params.glmEndpoint;
+    this.glmClearThinking = params.glmClearThinking ?? false;
     this._activeModel = params.model;
     this.enableAgents = params.enableAgents ?? false;
     this.agents = params.agents ?? {};
@@ -1452,6 +1458,14 @@ export class Config {
 
   getProxy(): string | undefined {
     return this.proxy;
+  }
+
+  getGlmEndpoint(): string | undefined {
+    return this.glmEndpoint;
+  }
+
+  getGlmClearThinking(): boolean {
+    return this.glmClearThinking;
   }
 
   getWorkingDir(): string {

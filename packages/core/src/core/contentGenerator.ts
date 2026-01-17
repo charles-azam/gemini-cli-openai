@@ -55,6 +55,8 @@ export type ContentGeneratorConfig = {
   vertexai?: boolean;
   authType?: AuthType;
   proxy?: string;
+  glmEndpoint?: string;
+  glmClearThinking?: boolean;
 };
 
 export async function createContentGeneratorConfig(
@@ -81,6 +83,8 @@ export async function createContentGeneratorConfig(
     authType,
     proxy: config?.getProxy(),
   };
+  contentGeneratorConfig.glmEndpoint = config.getGlmEndpoint?.();
+  contentGeneratorConfig.glmClearThinking = config.getGlmClearThinking?.();
 
   // If we are using Google auth or we are in Cloud Shell, there is nothing else to validate for now
   if (
@@ -179,9 +183,11 @@ export async function createContentGenerator(
         apiKey: config.apiKey,
         userAgent,
         endpoint:
+          config.glmEndpoint ||
           process.env['GLM_API_BASE_URL'] ||
           process.env['ZAI_API_BASE_URL'] ||
           undefined,
+        clearThinking: config.glmClearThinking ?? false,
         extraHeaders: externalHeaders,
       });
       return new LoggingContentGenerator(glmGenerator, gcConfig);

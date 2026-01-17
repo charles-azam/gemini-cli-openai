@@ -682,6 +682,36 @@ const SETTINGS_SCHEMA = {
         description: 'The Gemini model to use for conversations.',
         showInDialog: false,
       },
+      zai: {
+        type: 'object',
+        label: 'Z.ai',
+        category: 'Model',
+        requiresRestart: true,
+        default: {},
+        description: 'Z.ai provider settings for GLM models.',
+        showInDialog: false,
+        properties: {
+          endpoint: {
+            type: 'string',
+            label: 'Z.ai Endpoint',
+            category: 'Model',
+            requiresRestart: true,
+            default: undefined as string | undefined,
+            description: 'Override the Z.ai chat completions endpoint.',
+            showInDialog: false,
+          },
+          clearThinking: {
+            type: 'boolean',
+            label: 'Clear Thinking',
+            category: 'Model',
+            requiresRestart: true,
+            default: false,
+            description:
+              'Clear thinking between turns when Z.ai thinking mode is enabled.',
+            showInDialog: false,
+          },
+        },
+      },
       maxSessionTurns: {
         type: 'number',
         label: 'Max Session Turns',

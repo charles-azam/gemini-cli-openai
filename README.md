@@ -27,8 +27,24 @@ Key implementation files:
 
 - Set `ZAI_API_KEY` to use GLM auth. The CLI will auto-select GLM when it is
   set.
-- Optional endpoint override: `ZAI_API_BASE_URL` or `GLM_API_BASE_URL`.
+- Optional endpoint override: `model.zai.endpoint` (takes precedence), or
+  `ZAI_API_BASE_URL` / `GLM_API_BASE_URL`.
 - Use model `glm-4.7` in settings or via `--model glm-4.7`.
+- Optional thinking behavior: `model.zai.clearThinking` to clear preserved
+  reasoning between turns (requires restart).
+
+Example `settings.json`:
+
+```json
+{
+  "model": {
+    "zai": {
+      "endpoint": "https://api.z.ai/api/coding/paas/v4/chat/completions",
+      "clearThinking": false
+    }
+  }
+}
+```
 
 Default endpoint:
 

@@ -354,6 +354,7 @@ export class GlmContentGenerator {
       apiKey: string;
       userAgent: string;
       endpoint?: string;
+      clearThinking?: boolean;
       extraHeaders?: Record<string, string>;
     },
   ) {}
@@ -474,7 +475,7 @@ export class GlmContentGenerator {
     if (thinkingEnabled && thinkingConfig?.includeThoughts !== false) {
       payload.thinking = {
         type: 'enabled',
-        clear_thinking: false,
+        clear_thinking: this.options.clearThinking ?? false,
       };
     }
     return payload;

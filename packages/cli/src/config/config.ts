@@ -727,6 +727,8 @@ export async function loadCliConfig(
     experimentalJitContext: settings.experimental?.jitContext,
     noBrowser: !!process.env['NO_BROWSER'],
     summarizeToolOutput: settings.model?.summarizeToolOutput,
+    glmEndpoint: settings.model?.zai?.endpoint,
+    glmClearThinking: settings.model?.zai?.clearThinking,
     ideMode,
     compressionThreshold: settings.model?.compressionThreshold,
     folderTrust,
