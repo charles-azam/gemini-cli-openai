@@ -13,7 +13,7 @@ import {
   afterEach,
   type Mock,
 } from 'vitest';
-import { renderHook } from '../../test-utils/render.js';
+import { createMockSettings, renderHook } from '../../test-utils/render.js';
 import { useAuthCommand, validateAuthMethodWithSettings } from './useAuth.js';
 import { AuthType, type Config } from '@google/gemini-cli-core';
 import { AuthState } from '../types.js';
@@ -143,16 +143,13 @@ describe('useAuth', () => {
     } as unknown as Config;
 
     const createSettings = (selectedType?: AuthType) =>
-      ({
-        merged: {
-          security: {
-            auth: {
-              selectedType,
-            },
+      createMockSettings({
+        security: {
+          auth: {
+            selectedType,
           },
         },
-        setValue: vi.fn(),
-      }) as LoadedSettings;
+      });
 
     it('should initialize with Unauthenticated state', () => {
       const { result } = renderHook(() =>
@@ -191,10 +188,11 @@ describe('useAuth', () => {
     it('should auto-select GLM if ZAI_API_KEY is set and no auth type selected', async () => {
       process.env['ZAI_API_KEY'] = 'glm-key';
       const settings = createSettings(undefined);
+      const setValueSpy = vi.spyOn(settings, 'setValue');
       const { result } = renderHook(() => useAuthCommand(settings, mockConfig));
 
       await waitFor(() => {
-        expect(settings.setValue).toHaveBeenCalledWith(
+        expect(setValueSpy).toHaveBeenCalledWith(
           SettingScope.User,
           'security.auth.selectedType',
           AuthType.USE_GLM,

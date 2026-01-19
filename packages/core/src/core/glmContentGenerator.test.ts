@@ -159,7 +159,7 @@ describe('GlmContentGenerator', () => {
     const parsedBody = rawBody ? JSON.parse(rawBody) : undefined;
     expect(isRecord(parsedBody)).toBe(true);
     if (isRecord(parsedBody)) {
-      expect(parsedBody.thinking).toEqual({ type: 'disabled' });
+      expect(parsedBody['thinking']).toEqual({ type: 'disabled' });
     }
   });
 });
