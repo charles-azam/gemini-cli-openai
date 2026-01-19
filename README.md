@@ -7,6 +7,7 @@ preserves Z.ai's extended thinking ("reasoning_content") across tool calls.
 
 - Use GLM-4.7 with the Gemini CLI interface and tooling.
 - Support Z.ai's interleaved thinking output and tool calling format.
+- Route web search tool calls through Z.ai when GLM auth is active.
 
 ## How it is implemented
 
@@ -17,6 +18,7 @@ preserves Z.ai's extended thinking ("reasoning_content") across tool calls.
   `reasoning_content` by feeding it back into the next assistant turn.
 - Parses Z.ai usage metadata (including reasoning tokens) into Gemini CLI usage
   stats.
+- Remaps the web search tool to Z.ai's web search in chat when using GLM auth.
 
 Key implementation files:
 
@@ -32,19 +34,23 @@ Key implementation files:
 - Use model `glm-4.7` in settings or via `--model glm-4.7`.
 - Optional thinking behavior: `model.zai.clearThinking` to clear preserved
   reasoning between turns (requires restart).
+- Optional thinking toggle: `model.zai.disableThinking` to request direct
+  answers without reasoning (requires restart).
 
 CLI overrides (no settings file needed):
 
 ```bash
 gemini --model glm-4.7 \
   --zai-endpoint https://api.z.ai/api/coding/paas/v4/chat/completions \
-  --zai-clear-thinking
+  --zai-clear-thinking \
+  --zai-disable-thinking
 ```
 
 `--zai-model` is an alias for `--model`.
 
-Note: Z.ai thinking mode is always requested in this fork; it does not honor
-Gemini `thinkingConfig` settings.
+Note: Z.ai thinking mode is requested by default in this fork. Use
+`--zai-disable-thinking` or `model.zai.disableThinking` to turn it off. Gemini
+`thinkingConfig` settings are not mapped.
 
 Example `settings.json`:
 
@@ -53,7 +59,8 @@ Example `settings.json`:
   "model": {
     "zai": {
       "endpoint": "https://api.z.ai/api/coding/paas/v4/chat/completions",
-      "clearThinking": false
+      "clearThinking": false,
+      "disableThinking": false
     }
   }
 }
@@ -62,3 +69,9 @@ Example `settings.json`:
 Default endpoint:
 
 - `https://api.z.ai/api/coding/paas/v4/chat/completions`
+
+## Web search
+
+When GLM auth is active, the `google_web_search` tool is routed through Z.ai's
+web search in chat and returns Z.ai sources in the tool output. When using
+Gemini auth, the existing Google Search integration is used instead.
