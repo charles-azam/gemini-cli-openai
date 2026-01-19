@@ -472,6 +472,7 @@ describe('gemini.tsx main function kitty protocol', () => {
       zaiModel: undefined,
       zaiEndpoint: undefined,
       zaiClearThinking: undefined,
+      zaiDisableThinking: undefined,
       sandbox: undefined,
       debug: undefined,
       prompt: undefined,

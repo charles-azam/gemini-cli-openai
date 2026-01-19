@@ -93,7 +93,7 @@ interface GlmChatCompletionRequest {
     | 'required'
     | { type: 'function'; function: { name: string } };
   thinking?: {
-    type: 'enabled';
+    type: 'enabled' | 'disabled';
     clear_thinking?: boolean;
   };
 }
@@ -355,6 +355,7 @@ export class GlmContentGenerator {
       userAgent: string;
       endpoint?: string;
       clearThinking?: boolean;
+      thinkingEnabled?: boolean;
       extraHeaders?: Record<string, string>;
     },
   ) {}
@@ -462,10 +463,15 @@ export class GlmContentGenerator {
     if (toolChoice) {
       payload.tool_choice = toolChoice;
     }
-    payload.thinking = {
-      type: 'enabled',
-      clear_thinking: this.options.clearThinking ?? false,
-    };
+    const thinkingEnabled = this.options.thinkingEnabled ?? true;
+    if (thinkingEnabled) {
+      payload.thinking = {
+        type: 'enabled',
+        clear_thinking: this.options.clearThinking ?? false,
+      };
+    } else {
+      payload.thinking = { type: 'disabled' };
+    }
     return payload;
   }
 

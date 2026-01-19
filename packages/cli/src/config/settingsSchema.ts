@@ -710,6 +710,15 @@ const SETTINGS_SCHEMA = {
               'Clear thinking between turns when Z.ai thinking mode is enabled.',
             showInDialog: false,
           },
+          disableThinking: {
+            type: 'boolean',
+            label: 'Disable Thinking',
+            category: 'Model',
+            requiresRestart: true,
+            default: false,
+            description: 'Disable Z.ai thinking and return direct answers.',
+            showInDialog: false,
+          },
         },
       },
       maxSessionTurns: {

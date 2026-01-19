@@ -65,6 +65,7 @@ export interface CliArgs {
   zaiModel: string | undefined;
   zaiEndpoint: string | undefined;
   zaiClearThinking: boolean | undefined;
+  zaiDisableThinking: boolean | undefined;
   sandbox: boolean | string | undefined;
   debug: boolean | undefined;
   prompt: string | undefined;
@@ -131,6 +132,10 @@ export async function parseArguments(
           type: 'boolean',
           description:
             'Clear Z.ai reasoning between turns when thinking is enabled.',
+        })
+        .option('zai-disable-thinking', {
+          type: 'boolean',
+          description: 'Disable Z.ai thinking to return direct answers.',
         })
         .option('prompt', {
           alias: 'p',
@@ -751,6 +756,8 @@ export async function loadCliConfig(
     glmEndpoint: argv.zaiEndpoint ?? settings.model?.zai?.endpoint,
     glmClearThinking:
       argv.zaiClearThinking ?? settings.model?.zai?.clearThinking,
+    glmDisableThinking:
+      argv.zaiDisableThinking ?? settings.model?.zai?.disableThinking,
     ideMode,
     compressionThreshold: settings.model?.compressionThreshold,
     folderTrust,

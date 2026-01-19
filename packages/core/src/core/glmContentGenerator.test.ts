@@ -12,6 +12,10 @@ const DEFAULT_OPTIONS = {
   userAgent: 'test-agent',
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 describe('GlmContentGenerator', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -121,5 +125,41 @@ describe('GlmContentGenerator', () => {
       secondValue?.candidates?.[0]?.content?.parts?.[0]?.functionCall?.name,
     ).toBe('plan');
     expect(streamIterator.next).toBeDefined();
+  });
+
+  it('disables thinking when configured', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            finish_reason: 'stop',
+            index: 0,
+            message: {
+              content: 'Done',
+            },
+          },
+        ],
+      }),
+    } as unknown as Response);
+
+    const generator = new GlmContentGenerator({
+      ...DEFAULT_OPTIONS,
+      thinkingEnabled: false,
+    });
+    await generator.generateContent({
+      model: 'glm-4.7',
+      contents: [],
+      config: {},
+    });
+
+    const requestInit = fetchMock.mock.calls[0]?.[1];
+    const rawBody =
+      typeof requestInit?.body === 'string' ? requestInit.body : '';
+    const parsedBody = rawBody ? JSON.parse(rawBody) : undefined;
+    expect(isRecord(parsedBody)).toBe(true);
+    if (isRecord(parsedBody)) {
+      expect(parsedBody.thinking).toEqual({ type: 'disabled' });
+    }
   });
 });

@@ -324,6 +324,7 @@ export interface ConfigParameters {
   model: string;
   glmEndpoint?: string;
   glmClearThinking?: boolean;
+  glmDisableThinking?: boolean;
   maxSessionTurns?: number;
   experimentalZedIntegration?: boolean;
   listSessions?: boolean;
@@ -459,6 +460,7 @@ export class Config {
   private model: string;
   private readonly glmEndpoint: string | undefined;
   private readonly glmClearThinking: boolean;
+  private readonly glmDisableThinking: boolean;
   private previewFeatures: boolean | undefined;
   private hasAccessToPreviewModel: boolean = false;
   private readonly noBrowser: boolean;
@@ -618,6 +620,7 @@ export class Config {
     this.model = params.model;
     this.glmEndpoint = params.glmEndpoint;
     this.glmClearThinking = params.glmClearThinking ?? false;
+    this.glmDisableThinking = params.glmDisableThinking ?? false;
     this._activeModel = params.model;
     this.enableAgents = params.enableAgents ?? false;
     this.agents = params.agents ?? {};
@@ -1466,6 +1469,10 @@ export class Config {
 
   getGlmClearThinking(): boolean {
     return this.glmClearThinking;
+  }
+
+  getGlmDisableThinking(): boolean {
+    return this.glmDisableThinking;
   }
 
   getWorkingDir(): string {
