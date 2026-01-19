@@ -75,3 +75,49 @@ Default endpoint:
 When GLM auth is active, the `google_web_search` tool is routed through Z.ai's
 web search in chat and returns Z.ai sources in the tool output. When using
 Gemini auth, the existing Google Search integration is used instead.
+
+## Installation (local)
+
+This fork does not collide with Gemini CLI settings because it uses a separate
+config directory (`.gemini-cli-zai`) and distinct API key storage entries. To
+avoid command name collisions, use a different shell alias or wrapper script
+instead of `gemini`.
+
+1. Clone the repo and install dependencies:
+
+```bash
+git clone https://github.com/<your-org>/gemini-cli-zai.git
+cd gemini-cli-zai
+npm ci
+```
+
+2. Build and bundle:
+
+```bash
+npm run build
+npm run bundle
+```
+
+3. Map a shortcut to the bundled CLI (example for zsh):
+
+```bash
+echo 'alias gemini-zai="node /path/to/gemini-cli-zai/bundle/gemini.js"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Alternative: (example for bash):
+
+```bash
+echo 'alias gemini-zai="node /path/to/gemini-cli-zai/bundle/gemini.js"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Alternative: create a wrapper script (no alias required):
+
+```bash
+cat > ~/bin/gemini-zai <<'EOF'
+#!/usr/bin/env bash
+exec node /path/to/gemini-cli-zai/bundle/gemini.js "$@"
+EOF
+chmod +x ~/bin/gemini-zai
+```
